@@ -27,6 +27,7 @@ futures = "0.3"
 # HTTP client
 reqwest = { version = "0.11", features = ["json"] }
 hyper = "1.0"
+openssl = { version = "0.10", features = ["vendored"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
