@@ -31,7 +31,7 @@
 //! ```
 
 use anyhow::Result;
-use futures::{SinkExt, StreamExt};
+use futures::StreamExt;
 use reqwest::{Client as HttpClient, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -493,7 +493,7 @@ impl BettercapClient {
                 match connect_async(&url_str).await {
                     Ok((ws_stream, _)) => {
                         info!("Websocket connected");
-                        let (mut write, mut read) = ws_stream.split();
+                        let (_write, mut read) = ws_stream.split();
 
                         while let Some(msg) = read.next().await {
                             match msg {

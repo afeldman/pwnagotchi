@@ -59,8 +59,7 @@
 //! println!("Advertisement from {}", ad.name);
 //! ```
 
-use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signature, Signer, Verifier};
-use rand::rngs::OsRng;
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{debug, info};
@@ -163,7 +162,7 @@ pub struct MeshAdvertisement {
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub struct MeshIdentity {
-    keypair: Keypair,
+    signing_key: SigningKey,
     fingerprint: String,
     name: String,
 }
@@ -188,12 +187,12 @@ impl MeshIdentity {
     /// assert_eq!(identity.fingerprint().len(), 16); // 8 bytes as hex
     /// ```
     pub fn generate(name: &str) -> Self {
-        let mut csprng = OsRng;
-        let keypair = Keypair::generate(&mut csprng);
-        let fingerprint = hex::encode(&keypair.public.as_bytes()[..8]);
+        let signing_key = SigningKey::from_bytes(&rand::random::<[u8; 32]>());
+        let verifying_key = signing_key.verifying_key();
+        let fingerprint = hex::encode(&verifying_key.to_bytes()[..8]);
 
         Self {
-            keypair,
+            signing_key,
             fingerprint,
             name: name.to_string(),
         }
@@ -234,16 +233,12 @@ impl MeshIdentity {
         public: &[u8],
         name: &str,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let secret_key = SecretKey::from_bytes(secret)?;
-        let public_key = PublicKey::from_bytes(public)?;
-        let keypair = Keypair {
-            secret: secret_key,
-            public: public_key,
-        };
+        let secret_bytes: [u8; 32] = secret.try_into()?;
+        let signing_key = SigningKey::from_bytes(&secret_bytes);
         let fingerprint = hex::encode(&public[..8]);
 
         Ok(Self {
-            keypair,
+            signing_key,
             fingerprint,
             name: name.to_string(),
         })
@@ -257,8 +252,8 @@ impl MeshIdentity {
         &self.name
     }
 
-    pub fn public_key(&self) -> &[u8] {
-        self.keypair.public.as_bytes()
+    pub fn public_key(&self) -> Vec<u8> {
+        self.signing_key.verifying_key().to_bytes().to_vec()
     }
 
     /// Signs a message using this identity's private key.
@@ -283,7 +278,7 @@ impl MeshIdentity {
     /// assert_eq!(signature.len(), 64);
     /// ```
     pub fn sign(&self, message: &[u8]) -> Vec<u8> {
-        let signature: Signature = self.keypair.sign(message);
+        let signature: Signature = self.signing_key.sign(message);
         signature.to_bytes().to_vec()
     }
 
@@ -316,9 +311,12 @@ impl MeshIdentity {
     /// assert!(!identity.verify(b"Wrong message", &signature, identity.public_key()));
     /// ```
     pub fn verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
-        if let Ok(pk) = PublicKey::from_bytes(public_key) {
-            if let Ok(sig) = Signature::from_bytes(signature) {
-                return pk.verify(message, &sig).is_ok();
+        if let Ok(pk_bytes) = <[u8; 32]>::try_from(public_key) {
+            if let Ok(pk) = VerifyingKey::from_bytes(&pk_bytes) {
+                if let Ok(sig_bytes) = <[u8; 64]>::try_from(signature) {
+                    let sig = Signature::from_bytes(&sig_bytes);
+                    return pk.verify(message, &sig).is_ok();
+                }
             }
         }
         false

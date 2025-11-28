@@ -86,7 +86,7 @@
 
 use async_trait::async_trait;
 use pwnagotchi_automata::{Epoch, Mood};
-use pwnagotchi_core::{AccessPoint, Handshake, Station};
+use pwnagotchi_core::{AccessPoint, Station};
 use serde_json::Value;
 
 /// Plugin trait for extending agent functionality.

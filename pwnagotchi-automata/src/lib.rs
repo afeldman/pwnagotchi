@@ -17,6 +17,12 @@ pub struct Epoch {
     pub num_deauths: u32,
 }
 
+impl Default for Epoch {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Epoch {
     pub fn new() -> Self {
         Self {
@@ -276,6 +282,11 @@ impl Automata {
     /// ```
     pub fn epoch(&self) -> &Epoch {
         &self.epoch
+    }
+
+    /// Returns a mutable reference to the epoch for updating counters.
+    pub fn epoch_mut(&mut self) -> &mut Epoch {
+        &mut self.epoch
     }
 
     /// Returns the current mood.

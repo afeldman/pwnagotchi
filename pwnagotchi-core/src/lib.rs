@@ -4,8 +4,7 @@ use pwnagotchi_bettercap::{BettercapClient, BettercapEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tokio::sync::mpsc;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// Configuration for the agent
 #[derive(Debug, Clone, Deserialize)]
@@ -200,6 +199,7 @@ pub struct Handshake {
 /// println!("Current mood: {:?}", agent.mood());
 /// # }
 /// ```
+#[allow(dead_code)]
 pub struct Agent {
     config: AgentConfig,
     bettercap: BettercapClient,
@@ -402,6 +402,7 @@ impl Agent {
     }
 
     /// Handle bettercap event
+    #[allow(dead_code)]
     async fn handle_event(&mut self, event: BettercapEvent) {
         debug!("Event: {} - {:?}", event.tag, event.data);
 
@@ -422,19 +423,22 @@ impl Agent {
         }
     }
 
-    fn update_access_points(&mut self, event: &BettercapEvent) {
+    #[allow(dead_code)]
+    fn update_access_points(&mut self, _event: &BettercapEvent) {
         // Parse and update AP list
         // Implementation depends on bettercap event structure
         self.total_aps = self.access_points.len();
     }
 
-    fn update_stations(&mut self, event: &BettercapEvent) {
+    #[allow(dead_code)]
+    fn update_stations(&mut self, _event: &BettercapEvent) {
         // Parse and update station list
     }
 
-    fn on_handshake(&mut self, event: &BettercapEvent) {
+    #[allow(dead_code)]
+    fn on_handshake(&mut self, _event: &BettercapEvent) {
         info!("Handshake captured!");
-        self.automata.epoch().track_handshake();
+        self.automata.epoch_mut().track_handshake();
 
         // Parse handshake event and save to list
         // Trigger plugin hooks

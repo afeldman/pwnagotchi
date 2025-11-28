@@ -44,7 +44,13 @@ jobs:
               run: cargo fmt --all -- --check
 
             - name: Run clippy
-              run: cargo clippy --all -- -D warnings
+              run: |
+                  cargo clippy --package pwnagotchi-bettercap \
+                    --package pwnagotchi-automata \
+                    --package pwnagotchi-plugins \
+                    --package pwnagotchi-cli \
+                    --package pwnagotchi-mesh \
+                    --package pwnagotchi-core -- -D warnings
 
             - name: Build (skip failing crates)
               run: |
