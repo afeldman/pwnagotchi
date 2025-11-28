@@ -1,251 +1,251 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+    push:
+        tags:
+            - "v*"
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
 
 jobs:
-  create-release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ steps.get_version.outputs.version }}
-    
-    steps:
-    - name: Get version from tag
-      id: get_version
-      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-    
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: false
-        body: |
-          ## Pwnagotchi Rust ${{ github.ref_name }}
-          
-          ### 🎯 Optimized for Raspberry Pi Zero W/2W
-          
-          ### 🚀 Features
-          - Rust-based core implementation for better performance
-          - Python plugin support via PyO3
-          - BetterCAP integration for WiFi monitoring
-          - Mesh networking capabilities
-          
-          ### 📦 Downloads
-          **Primary targets (Raspberry Pi):**
-          - `armv6-linux-gnueabihf` - **Raspberry Pi Zero W** (recommended)
-          - `armv7-linux-gnueabihf` - **Raspberry Pi 2/3/4** (32-bit)
-          - `aarch64-linux-gnu` - **Raspberry Pi Zero 2W/3/4** (64-bit)
-          
-          **Secondary targets:**
-          - `linux-x86_64` - Development/testing on Linux desktop
-          
-          ### 🔍 Changes
-          See the full changelog in the repository.
+    create-release:
+        name: Create Release
+        runs-on: ubuntu-latest
+        outputs:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            version: ${{ steps.get_version.outputs.version }}
 
-  build-pi-zero-w:
-    name: Build Raspberry Pi Zero W (ARMv6)
-    needs: create-release
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: arm-unknown-linux-gnueabihf
-    
-    - name: Install cross-compilation tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-arm-linux-gnueabihf
-    
-    - name: Build for Pi Zero W (ARMv6)
-      env:
-        CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER: arm-linux-gnueabihf-gcc
-      run: |
-        cargo build --release --target arm-unknown-linux-gnueabihf \
-          --package pwnagotchi-bettercap \
-          --package pwnagotchi-automata \
-          --package pwnagotchi-plugins \
-          --package pwnagotchi-cli \
-          --package pwnagotchi-mesh \
-          --package pwnagotchi-core
-    
-    - name: Create tarball
-      run: |
-        mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf
-        cp target/arm-unknown-linux-gnueabihf/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/pwnagotchi || true
-        cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/ || true
-        cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/ || true
-        cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/ || true
-        cd release
-        tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf.tar.gz
-        asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf.tar.gz
-        asset_content_type: application/gzip
+        steps:
+            - name: Get version from tag
+              id: get_version
+              run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-  build-pi-2-3-4:
-    name: Build Raspberry Pi 2/3/4 (ARMv7)
-    needs: create-release
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: armv7-unknown-linux-gnueabihf
-    
-    - name: Install cross-compilation tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-arm-linux-gnueabihf
-    
-    - name: Build for Pi 2/3/4 (ARMv7)
-      env:
-        CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER: arm-linux-gnueabihf-gcc
-      run: |
-        cargo build --release --target armv7-unknown-linux-gnueabihf \
-          --package pwnagotchi-bettercap \
-          --package pwnagotchi-automata \
-          --package pwnagotchi-plugins \
-          --package pwnagotchi-cli \
-          --package pwnagotchi-mesh \
-          --package pwnagotchi-core
-    
-    - name: Create tarball
-      run: |
-        mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf
-        cp target/armv7-unknown-linux-gnueabihf/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/pwnagotchi || true
-        cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/ || true
-        cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/ || true
-        cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/ || true
-        cd release
-        tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf.tar.gz
-        asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf.tar.gz
-        asset_content_type: application/gzip
+            - name: Create Release
+              id: create_release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ github.ref }}
+                  release_name: Release ${{ github.ref_name }}
+                  draft: false
+                  prerelease: false
+                  body: |
+                      ## Pwnagotchi Rust ${{ github.ref_name }}
 
-  build-pi-64bit:
-    name: Build Raspberry Pi 64-bit (ARM64)
-    needs: create-release
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: aarch64-unknown-linux-gnu
-    
-    - name: Install cross-compilation tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu
-    
-    - name: Build for Pi 64-bit (ARM64)
-      env:
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-      run: |
-        cargo build --release --target aarch64-unknown-linux-gnu \
-          --package pwnagotchi-bettercap \
-          --package pwnagotchi-automata \
-          --package pwnagotchi-plugins \
-          --package pwnagotchi-cli \
-          --package pwnagotchi-mesh \
-          --package pwnagotchi-core
-    
-    - name: Create tarball
-      run: |
-        mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu
-        cp target/aarch64-unknown-linux-gnu/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/pwnagotchi || true
-        cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/ || true
-        cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/ || true
-        cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/ || true
-        cd release
-        tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu.tar.gz
-        asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu.tar.gz
-        asset_content_type: application/gzip
+                      ### 🎯 Optimized for Raspberry Pi Zero W/2W
 
-  build-linux-x86_64:
-    name: Build Linux (x86_64)
-    needs: create-release
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-    
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libssl-dev pkg-config
-    
-    - name: Build release binary
-      run: |
-        cargo build --release \
-          --package pwnagotchi-bettercap \
-          --package pwnagotchi-automata \
-          --package pwnagotchi-plugins \
-          --package pwnagotchi-cli \
-          --package pwnagotchi-mesh \
-          --package pwnagotchi-core
-    
-    - name: Create tarball
-      run: |
-        mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64
-        cp target/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/pwnagotchi || true
-        cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/ || true
-        cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/ || true
-        cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/ || true
-        cd release
-        tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz
-        asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz
-        asset_content_type: application/gzip
+                      ### 🚀 Features
+                      - Rust-based core implementation for better performance
+                      - Python plugin support via PyO3
+                      - BetterCAP integration for WiFi monitoring
+                      - Mesh networking capabilities
+
+                      ### 📦 Downloads
+                      **Primary targets (Raspberry Pi):**
+                      - `armv6-linux-gnueabihf` - **Raspberry Pi Zero W** (recommended)
+                      - `armv7-linux-gnueabihf` - **Raspberry Pi 2/3/4** (32-bit)
+                      - `aarch64-linux-gnu` - **Raspberry Pi Zero 2W/3/4** (64-bit)
+
+                      **Secondary targets:**
+                      - `linux-x86_64` - Development/testing on Linux desktop
+
+                      ### 🔍 Changes
+                      See the full changelog in the repository.
+
+    build-pi-zero-w:
+        name: Build Raspberry Pi Zero W (ARMv6)
+        needs: create-release
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: arm-unknown-linux-gnueabihf
+
+            - name: Install cross-compilation tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+            - name: Build for Pi Zero W (ARMv6)
+              env:
+                  CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER: arm-linux-gnueabihf-gcc
+              run: |
+                  cargo build --release --target arm-unknown-linux-gnueabihf \
+                    --package pwnagotchi-bettercap \
+                    --package pwnagotchi-automata \
+                    --package pwnagotchi-plugins \
+                    --package pwnagotchi-cli \
+                    --package pwnagotchi-mesh \
+                    --package pwnagotchi-core
+
+            - name: Create tarball
+              run: |
+                  mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf
+                  cp target/arm-unknown-linux-gnueabihf/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/pwnagotchi || true
+                  cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/ || true
+                  cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/ || true
+                  cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf/ || true
+                  cd release
+                  tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf
+
+            - name: Upload Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.upload_url }}
+                  asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf.tar.gz
+                  asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-armv6-linux-gnueabihf.tar.gz
+                  asset_content_type: application/gzip
+
+    build-pi-2-3-4:
+        name: Build Raspberry Pi 2/3/4 (ARMv7)
+        needs: create-release
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: armv7-unknown-linux-gnueabihf
+
+            - name: Install cross-compilation tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+            - name: Build for Pi 2/3/4 (ARMv7)
+              env:
+                  CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER: arm-linux-gnueabihf-gcc
+              run: |
+                  cargo build --release --target armv7-unknown-linux-gnueabihf \
+                    --package pwnagotchi-bettercap \
+                    --package pwnagotchi-automata \
+                    --package pwnagotchi-plugins \
+                    --package pwnagotchi-cli \
+                    --package pwnagotchi-mesh \
+                    --package pwnagotchi-core
+
+            - name: Create tarball
+              run: |
+                  mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf
+                  cp target/armv7-unknown-linux-gnueabihf/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/pwnagotchi || true
+                  cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/ || true
+                  cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/ || true
+                  cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf/ || true
+                  cd release
+                  tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf
+
+            - name: Upload Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.upload_url }}
+                  asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf.tar.gz
+                  asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-armv7-linux-gnueabihf.tar.gz
+                  asset_content_type: application/gzip
+
+    build-pi-64bit:
+        name: Build Raspberry Pi 64-bit (ARM64)
+        needs: create-release
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: aarch64-unknown-linux-gnu
+
+            - name: Install cross-compilation tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y gcc-aarch64-linux-gnu
+
+            - name: Build for Pi 64-bit (ARM64)
+              env:
+                  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+              run: |
+                  cargo build --release --target aarch64-unknown-linux-gnu \
+                    --package pwnagotchi-bettercap \
+                    --package pwnagotchi-automata \
+                    --package pwnagotchi-plugins \
+                    --package pwnagotchi-cli \
+                    --package pwnagotchi-mesh \
+                    --package pwnagotchi-core
+
+            - name: Create tarball
+              run: |
+                  mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu
+                  cp target/aarch64-unknown-linux-gnu/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/pwnagotchi || true
+                  cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/ || true
+                  cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/ || true
+                  cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu/ || true
+                  cd release
+                  tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu
+
+            - name: Upload Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.upload_url }}
+                  asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu.tar.gz
+                  asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-aarch64-linux-gnu.tar.gz
+                  asset_content_type: application/gzip
+
+    build-linux-x86_64:
+        name: Build Linux (x86_64)
+        needs: create-release
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+
+            - name: Install dependencies
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y libssl-dev pkg-config
+
+            - name: Build release binary
+              run: |
+                  cargo build --release \
+                    --package pwnagotchi-bettercap \
+                    --package pwnagotchi-automata \
+                    --package pwnagotchi-plugins \
+                    --package pwnagotchi-cli \
+                    --package pwnagotchi-mesh \
+                    --package pwnagotchi-core
+
+            - name: Create tarball
+              run: |
+                  mkdir -p release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64
+                  cp target/release/pwnagotchi-cli release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/pwnagotchi || true
+                  cp -r plugins release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/ || true
+                  cp pwnagotchi_plugin.py release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/ || true
+                  cp README.md LICENSE release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64/ || true
+                  cd release
+                  tar czf pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64
+
+            - name: Upload Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.create-release.outputs.upload_url }}
+                  asset_path: ./release/pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz
+                  asset_name: pwnagotchi-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz
+                  asset_content_type: application/gzip

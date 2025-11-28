@@ -54,17 +54,23 @@ jobs:
 
             - name: Build (skip failing crates)
               run: |
-                  cargo build --workspace \
-                    --exclude pwnagotchi-ui \
-                    --exclude pwnagotchi-core \
-                    --exclude pwnagotchi-mesh
+                  cargo build \
+                    --package pwnagotchi-bettercap \
+                    --package pwnagotchi-automata \
+                    --package pwnagotchi-plugins \
+                    --package pwnagotchi-cli \
+                    --package pwnagotchi-mesh \
+                    --package pwnagotchi-core
 
             - name: Run tests (skip failing crates)
               run: |
-                  cargo test --workspace \
-                    --exclude pwnagotchi-ui \
-                    --exclude pwnagotchi-core \
-                    --exclude pwnagotchi-mesh
+                  cargo test \
+                    --package pwnagotchi-bettercap \
+                    --package pwnagotchi-automata \
+                    --package pwnagotchi-plugins \
+                    --package pwnagotchi-cli \
+                    --package pwnagotchi-mesh \
+                    --package pwnagotchi-core
 
     test-python:
         name: Test Python Plugins
