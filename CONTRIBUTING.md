@@ -1,19 +1,140 @@
-## Contributing
+# Contributing to Pwnagotchi Rust
 
-### Guidelines
+Thank you for your interest in contributing to the Pwnagotchi Rust port! This document provides guidelines and information for contributors.
 
-Here are a few guidelines for contributing:
+## Getting Started
 
-* If you would like to contribute to the codebase **please raise an issue to propose the change**
-* Do not mix feature changes or fixes with refactoring - it makes the code harder to review and means there is more for the maintainers (with limited time) to test
+### Prerequisites
 
-* If you have found a bug please raise an issue and fill out the whole template.
-* If the documentation can be improved / translated etc please raise an issue to discuss.
-* Please always provide a summary of what you changed, how you did it and how it can be tested.
+- Rust 1.75 or later
+- Git
+- A Raspberry Pi with WiFi (for testing)
+- Bettercap installed
 
-### License
+### Development Setup
 
-This project is licensed under the GPL3 License.
+1. Clone the repository:
+
+```bash
+git clone https://github.com/jayofelony/pwnagotchi.git
+cd pwnagotchi
+git checkout rust
+```
+
+2. Build the project:
+
+```bash
+cargo build
+```
+
+3. Run tests:
+
+```bash
+cargo test --all
+```
+
+## Guidelines
+
+### Contributing to the Codebase
+
+- If you would like to contribute to the codebase **please raise an issue to propose the change**
+- Do not mix feature changes or fixes with refactoring - it makes the code harder to review and means there is more for the maintainers (with limited time) to test
+- If you have found a bug please raise an issue and fill out the whole template
+- If the documentation can be improved / translated etc please raise an issue to discuss
+- Please always provide a summary of what you changed, how you did it and how it can be tested
+
+### Before Submitting
+
+1. **Format your code**:
+
+```bash
+make fmt
+# or
+cargo fmt --all
+```
+
+2. **Run clippy**:
+
+```bash
+make clippy
+# or
+cargo clippy --all -- -D warnings
+```
+
+3. **Run tests**:
+
+```bash
+make test
+# or
+cargo test --all
+```
+
+### Commit Messages
+
+Follow conventional commit format:
+
+- `feat: add new feature`
+- `fix: bug fix`
+- `docs: documentation changes`
+- `test: add tests`
+- `refactor: code refactoring`
+- `perf: performance improvements`
+- `chore: maintenance tasks`
+
+Example:
+
+```
+feat(mesh): add peer discovery timeout
+
+Adds configurable timeout for mesh peer discovery to prevent
+stale peers from remaining in the list.
+```
+
+### Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes
+4. Run all checks (format, clippy, tests)
+5. Commit your changes with clear messages
+6. Push to your fork
+7. Open a Pull Request
+
+## Code Style
+
+### Rust Style
+
+Follow the standard Rust style guide:
+
+- Use `rustfmt` for formatting
+- Follow `clippy` suggestions
+- Use meaningful variable names
+- Add documentation comments for public APIs
+- Keep functions small and focused
+
+### Documentation
+
+All public APIs should have documentation:
+
+```rust
+/// Connects to the bettercap API server.
+///
+/// # Arguments
+///
+/// * `hostname` - The hostname or IP address
+/// * `port` - The port number
+///
+/// # Returns
+///
+/// Returns a `Result` with the connected client or an error.
+pub fn new(hostname: &str, port: u16) -> Result<Self> {
+    // ...
+}
+```
+
+## License
+
+This project is licensed under the GPL3 License. By contributing, you agree that your contributions will be licensed under the same license.
 
 #### Sign your work
 
@@ -68,4 +189,4 @@ Then you just add a line to every git commit message:
 If you set your `user.name` and `user.email` git configs, you can sign your
 commit automatically with `git commit -s`.
 
-* Please sign your commits with `git commit -s` so that commits are traceable.
+- Please sign your commits with `git commit -s` so that commits are traceable.

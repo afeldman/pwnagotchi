@@ -1,42 +1,257 @@
-# Pwnagotchi
-This is the main source for all forks:
-- RPiZeroW (32bit)
-- RPiZero2W, RPi3, RPi4, RPi5 (64bit)
+# Pwnagotchi - Rust Edition
 
-**For installation docs check out the [wiki](https://github.com/jayofelony/pwnagotchi/wiki)!**
+WiFi handshake capture tool for Raspberry Pi, rewritten in Rust for improved performance, memory safety, and reliability.
 
-If you want to sponsor this project you can use GH Sponsor or cryptocurrency:
+## Overview
 
-[GH Sponsor](https://github.com/sponsors/jayofelony)
+This is a complete Rust rewrite of the [pwnagotchi](https://pwnagotchi.org/) project. Pwnagotchi is a tool that leverages [bettercap](https://www.bettercap.org/) to capture WPA handshakes from surrounding WiFi networks.
 
-Or send some ethereum: 0x33ceC4Abe80fDE460a924d596d4dE31Bc0767bb6
+## Features
 
-**Proudly partnering with [PiSugar](https://www.pisugar.com)!!**
+- **Memory Safe**: Rewritten in Rust for guaranteed memory safety
+- **High Performance**: Async/await with tokio for efficient I/O
+- **Modular Design**: Clean separation into multiple crates
+- **Plugin System**: Extensible via trait-based plugins
+- **Mesh Networking**: Communicate with other pwnagotchi units
+- **E-ink Display Support**: Visual feedback on e-ink screens
+- **State Machine**: Mood-based behavior (bored, excited, sad, etc.)
 
----
+## Architecture
 
-[Pwnagotchi](https://pwnagotchi.org/) is a Raspberry Pi leveraging [bettercap](https://www.bettercap.org/) that survives from its surrounding Wi-Fi environment to maximize the crackable WPA key material it captures (either passively, or by performing authentication and association attacks). This material is collected as PCAP files containing any form of handshake supported by [hashcat](https://hashcat.net/hashcat/), including [PMKIDs](https://www.evilsocket.net/2019/02/13/Pwning-WiFi-networks-with-bettercap-and-the-PMKID-client-less-attack/), 
-full and half WPA handshakes.
+### Crates
 
-![ui](https://i.imgur.com/X68GXrn.png)
+- **pwnagotchi-core**: Main agent logic, WiFi monitoring, handshake detection
+- **pwnagotchi-bettercap**: HTTP/WebSocket client for bettercap API
+- **pwnagotchi-automata**: State machine for agent behavior
+- **pwnagotchi-mesh**: Mesh networking with cryptographic identity
+- **pwnagotchi-ui**: Display rendering for e-ink screens
+- **pwnagotchi-plugins**: Plugin system with async traits
+- **pwnagotchi-cli**: Command-line interface
 
-The "old" Pwnagotchi used to have AI to help it learn from its environment, but since then AI seemed to destabilize the Wi-Fi firmware. So I have chosen to remove the AI completely to give the Pwnagotchi more up-time and longer battery life when taking it on a walk.
+## Building
 
-Multiple units within close physical proximity can "talk" to each other, advertising their presence to each other by broadcasting custom information elements using a parasite protocol I've built on top of the existing dot11 standard.
+### Prerequisites
 
-## Documentation
+- Rust 1.75 or later
+- Bettercap installed and running
+- Raspberry Pi with WiFi interface in monitor mode
 
-https://github.com/jayofelony/pwnagotchi/wiki 
-https://pwnagotchi.org
+### Compile
 
-## Links
+```bash
+cargo build --release
+```
 
-| &nbsp;    | Official Links                                           |
-|-----------|----------------------------------------------------------|
-| Website   | [pwnagotchi.org](https://pwnagotchi.org/)                  |
-| Chat      | [discord](https://discord.gg/PGgnzFbz4M) |
-| Subreddit | [r/pwnagotchi](https://www.reddit.com/r/pwnagotchi/)     |
+### Install
+
+```bash
+cargo install --path pwnagotchi-cli
+```
+
+## Usage
+
+### Start the agent
+
+```bash
+pwnagotchi start
+```
+
+### With custom configuration
+
+```bash
+pwnagotchi -c config.toml start
+```
+
+### Check configuration
+
+```bash
+pwnagotchi check-config config.toml
+```
+
+### Show version
+
+```bash
+pwnagotchi version
+```
+
+## Configuration
+
+Create a `config.toml` file:
+
+```toml
+[main]
+iface = "wlan0mon"
+mon_start_cmd = "iw phy phy0 interface add wlan0mon type monitor"
+no_restart = false
+mon_max_blind_epochs = 50
+
+[bettercap]
+hostname = "127.0.0.1"
+scheme = "http"
+port = 8081
+username = "pwnagotchi"
+password = "pwnagotchi"
+handshakes = "/root/handshakes"
+silence = []
+
+[personality]
+bond_encounters_factor = 20000.0
+bored_num_epochs = 15
+sad_num_epochs = 25
+excited_num_epochs = 10
+max_misses_for_recon = 5
+max_inactive_scale = 10
+recon_inactive_multiplier = 2.0
+recon_time = 30
+channels = []
+ap_ttl = 120
+sta_ttl = 300
+min_rssi = -200
+```
+
+## Supported Hardware
+
+- Raspberry Pi Zero W (32-bit)
+- Raspberry Pi Zero 2W (64-bit)
+- Raspberry Pi 3 (64-bit)
+- Raspberry Pi 4 (64-bit)
+- Raspberry Pi 5 (64-bit)
+
+## Differences from Python Version
+
+### Improvements
+
+- **Memory Safety**: No more segfaults or memory leaks
+- **Performance**: Faster event processing with async I/O
+- **Type Safety**: Compile-time type checking
+- **Concurrency**: Native async/await with tokio
+- **Error Handling**: Proper Result types with anyhow
+
+### Missing Features (TODO)
+
+- [ ] Full AI integration (removed for stability in original)
+- [ ] Web UI (currently CLI only)
+- [ ] Complete plugin ecosystem
+- [ ] GPIO display drivers (mock display only)
+- [ ] Advanced mesh protocol features
+
+## Plugin Development
+
+Create a plugin by implementing the `Plugin` trait:
+
+```rust
+use async_trait::async_trait;
+use pwnagotchi_plugins::Plugin;
+use pwnagotchi_core::{AccessPoint, Station};
+
+pub struct MyPlugin;
+
+#[async_trait]
+impl Plugin for MyPlugin {
+    fn name(&self) -> &str { "my-plugin" }
+    fn version(&self) -> &str { "1.0.0" }
+    fn description(&self) -> &str { "My custom plugin" }
+
+    async fn on_handshake(
+        &mut self,
+        filename: &str,
+        ap: &AccessPoint,
+        station: &Station,
+    ) {
+        println!("Handshake captured: {}", filename);
+    }
+}
+```
+
+## Development
+
+### Run tests
+
+```bash
+cargo test --all
+```
+
+### Run with debug logging
+
+```bash
+cargo run -- -d start
+```
+
+### Check code
+
+```bash
+cargo clippy --all
+cargo fmt --all
+```
+
+## Utility Tools
+
+### Backup & Restore
+
+The `pwn-backup` tool provides SSH-based backup and restore functionality:
+
+```bash
+# Build the tool
+cargo build --release -p pwnagotchi-tools
+
+# Backup from device
+./target/release/pwn-backup backup -n 10.0.0.2 -u pi -o backup.tgz
+
+# Restore to device
+./target/release/pwn-backup restore -n 10.0.0.2 -u pi -b backup.tgz
+
+# Auto-find latest backup
+./target/release/pwn-backup restore -n 10.0.0.2 -u pi
+```
+
+**Note**: Make sure your SSH key is added to ssh-agent for authentication.
+
+### Connection Sharing Scripts
+
+Helper scripts for sharing internet connection with your Pwnagotchi over USB:
+
+#### Linux
+
+```bash
+sudo ./scripts/linux_connection_share.sh [usb_interface] [upstream_interface]
+# Example: sudo ./scripts/linux_connection_share.sh enx00e04c680378 wlp2s0
+```
+
+#### macOS
+
+```bash
+sudo ./scripts/macos_connection_share.sh [upstream_interface] [usb_ip]
+# Example: sudo ./scripts/macos_connection_share.sh en0 10.0.0.1
+```
+
+#### Windows
+
+```powershell
+.\scripts\win_connection_share.ps1
+```
+
+#### OpenBSD
+
+```bash
+sudo ./scripts/openbsd_connection_share.sh
+```
 
 ## License
 
-`pwnagotchi` created by [@evilsocket](https://x.com/evilsocket) and updated by [us](https://github.com/jayofelony/pwnagotchi/graphs/contributors). It is released under the GPL3 license.
+This Rust port maintains the GPL3 license of the original project.
+
+## Credits
+
+- Original Pwnagotchi: [@evilsocket](https://github.com/evilsocket)
+- Current Python maintainer: [@jayofelony](https://github.com/jayofelony)
+- Rust port: Community effort
+
+## Contributing
+
+Contributions welcome! Please open issues or pull requests on GitHub.
+
+## Links
+
+- [Original Pwnagotchi](https://pwnagotchi.org/)
+- [Bettercap](https://www.bettercap.org/)
+- [Hashcat](https://hashcat.net/hashcat/)

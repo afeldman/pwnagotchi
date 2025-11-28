@@ -1,0 +1,19 @@
+[package]
+name = "pwnagotchi-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+pwnagotchi-bettercap = { path = "../pwnagotchi-bettercap" }
+pwnagotchi-automata = { path = "../pwnagotchi-automata" }
+
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+pcap = { workspace = true }
+pnet = { workspace = true }

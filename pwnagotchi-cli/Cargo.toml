@@ -1,0 +1,23 @@
+[package]
+name = "pwnagotchi-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "pwnagotchi"
+path = "src/main.rs"
+
+[dependencies]
+pwnagotchi-core = { path = "../pwnagotchi-core" }
+pwnagotchi-automata = { path = "../pwnagotchi-automata" }
+pwnagotchi-ui = { path = "../pwnagotchi-ui" }
+pwnagotchi-plugins = { path = "../pwnagotchi-plugins" }
+
+tokio = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+toml = { workspace = true }
+serde = { workspace = true }

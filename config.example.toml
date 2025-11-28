@@ -1,0 +1,28 @@
+[main]
+iface = "wlan0mon"
+mon_start_cmd = "iw phy phy0 interface add wlan0mon type monitor"
+no_restart = false
+mon_max_blind_epochs = 50
+
+[bettercap]
+hostname = "127.0.0.1"
+scheme = "http"
+port = 8081
+username = "pwnagotchi"
+password = "pwnagotchi"
+handshakes = "/root/handshakes"
+silence = []
+
+[personality]
+bond_encounters_factor = 20000.0
+bored_num_epochs = 15
+sad_num_epochs = 25
+excited_num_epochs = 10
+max_misses_for_recon = 5
+max_inactive_scale = 10
+recon_inactive_multiplier = 2.0
+recon_time = 30
+channels = []
+ap_ttl = 120
+sta_ttl = 300
+min_rssi = -200

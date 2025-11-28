@@ -1,2 +1,11 @@
-*.pyc
-.vscode
+target/
+Cargo.lock
+*.pcap
+*.hccapx
+/handshakes/
+/.vscode/
+/.idea/
+*.swp
+*.swo
+*~
+.DS_Store

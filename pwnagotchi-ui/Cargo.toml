@@ -1,0 +1,12 @@
+[package]
+name = "pwnagotchi-ui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+pwnagotchi-automata = { path = "../pwnagotchi-automata" }
+
+embedded-graphics = { workspace = true }
+linux-embedded-hal = { workspace = true }
+serde = { workspace = true }
