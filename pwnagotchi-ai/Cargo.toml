@@ -1,0 +1,30 @@
+[package]
+name = "pwnagotchi-ai"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Workspace dependencies
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+
+# ML framework - using burn for pure Rust
+burn = { version = "0.14", features = ["ndarray", "train"] }
+burn-ndarray = "0.14"
+
+# Math and statistics
+ndarray = "0.15"
+rand = { workspace = true }
+
+# Optional: Use tch-rs for PyTorch backend (comment out if not needed)
+# tch = "0.16"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
