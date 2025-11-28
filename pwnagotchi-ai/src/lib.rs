@@ -44,7 +44,8 @@ pub mod reward;
 pub mod network;
 pub mod trainer;
 
-pub use a2c::A2CAgent;
+pub use a2c::{A2CAgent, RLAgent, AgentConfig};
 pub use environment::Environment;
 pub use epoch::{Epoch, EpochData};
 pub use reward::RewardFunction;
+pub use network::{ActorCriticNetwork, Algorithm, NetworkConfig};

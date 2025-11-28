@@ -15,16 +15,23 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 chrono = { workspace = true }
 
-# ML framework - using burn for pure Rust
-burn = { version = "0.14", features = ["ndarray", "train"] }
-burn-ndarray = "0.14"
+# ONNX Runtime for production inference
+ort = { version = "2.0", features = ["download-binaries"] }
+
+# Optional: Training backends (choose one)
+# burn = { version = "0.14", features = ["ndarray", "train"], optional = true }
+# burn-ndarray = { version = "0.14", optional = true }
+tch = { version = "0.16", optional = true }  # PyTorch for training
 
 # Math and statistics
 ndarray = "0.15"
 rand = { workspace = true }
 
-# Optional: Use tch-rs for PyTorch backend (comment out if not needed)
-# tch = "0.16"
+[features]
+default = ["onnx"]
+onnx = []  # ONNX inference (always available)
+train-pytorch = ["tch"]  # Train with PyTorch, export to ONNX
+train-burn = []  # Train with Burn (future)
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
