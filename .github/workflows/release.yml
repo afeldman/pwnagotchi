@@ -67,16 +67,12 @@ jobs:
               with:
                   targets: arm-unknown-linux-gnueabihf
 
-            - name: Install cross-compilation tools
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y gcc-arm-linux-gnueabihf
+            - name: Install cross
+              run: cargo install cross --git https://github.com/cross-rs/cross
 
             - name: Build for Pi Zero W (ARMv6)
-              env:
-                  CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER: arm-linux-gnueabihf-gcc
               run: |
-                  cargo build --release --target arm-unknown-linux-gnueabihf \
+                  cross build --release --target arm-unknown-linux-gnueabihf \
                     --package pwnagotchi-bettercap \
                     --package pwnagotchi-automata \
                     --package pwnagotchi-plugins \
@@ -117,16 +113,12 @@ jobs:
               with:
                   targets: armv7-unknown-linux-gnueabihf
 
-            - name: Install cross-compilation tools
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y gcc-arm-linux-gnueabihf
+            - name: Install cross
+              run: cargo install cross --git https://github.com/cross-rs/cross
 
             - name: Build for Pi 2/3/4 (ARMv7)
-              env:
-                  CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER: arm-linux-gnueabihf-gcc
               run: |
-                  cargo build --release --target armv7-unknown-linux-gnueabihf \
+                  cross build --release --target armv7-unknown-linux-gnueabihf \
                     --package pwnagotchi-bettercap \
                     --package pwnagotchi-automata \
                     --package pwnagotchi-plugins \
@@ -167,16 +159,12 @@ jobs:
               with:
                   targets: aarch64-unknown-linux-gnu
 
-            - name: Install cross-compilation tools
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y gcc-aarch64-linux-gnu
+            - name: Install cross
+              run: cargo install cross --git https://github.com/cross-rs/cross
 
             - name: Build for Pi 64-bit (ARM64)
-              env:
-                  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
               run: |
-                  cargo build --release --target aarch64-unknown-linux-gnu \
+                  cross build --release --target aarch64-unknown-linux-gnu \
                     --package pwnagotchi-bettercap \
                     --package pwnagotchi-automata \
                     --package pwnagotchi-plugins \
