@@ -51,7 +51,7 @@
 //!         _station: &Station,
 //!     ) {
 //!         self.handshake_count += 1;
-//!         println!("Handshake #{} captured: {} ({})", 
+//!         println!("Handshake #{} captured: {} ({})",
 //!             self.handshake_count, access_point.essid, filename);
 //!     }
 //!
@@ -75,10 +75,10 @@
 //! # #[tokio::main]
 //! # async fn main() {
 //! let mut manager = PluginManager::new();
-//! 
+//!
 //! // Register plugin
 //! manager.register(Box::new(MyPlugin));
-//! 
+//!
 //! // Load all plugins
 //! manager.on_loaded().await;
 //! # }
@@ -183,7 +183,7 @@ pub trait Plugin: Send + Sync {
 /// # #[tokio::main]
 /// # async fn main() {
 /// let mut manager = PluginManager::new();
-/// 
+///
 /// // Trigger lifecycle events
 /// manager.on_loaded().await;
 /// manager.on_ready().await;
@@ -324,9 +324,9 @@ mod tests {
     async fn test_plugin_manager() {
         let mut manager = PluginManager::new();
         manager.register(Box::new(ExamplePlugin));
-        
+
         assert_eq!(manager.plugins().len(), 1);
-        
+
         manager.trigger_ready().await;
     }
 }

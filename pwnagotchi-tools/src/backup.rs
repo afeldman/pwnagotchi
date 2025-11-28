@@ -70,7 +70,7 @@ enum Commands {
 
 fn check_connectivity(host: &str) -> Result<()> {
     println!("@ Checking connectivity to {} ...", host);
-    
+
     let output = Command::new("ping")
         .arg("-c")
         .arg("1")
@@ -89,9 +89,9 @@ fn check_connectivity(host: &str) -> Result<()> {
 }
 
 fn connect_ssh(host: &str, user: &str) -> Result<Session> {
-    let tcp = TcpStream::connect(format!("{}:22", host))
-        .context("Failed to connect to SSH server")?;
-    
+    let tcp =
+        TcpStream::connect(format!("{}:22", host)).context("Failed to connect to SSH server")?;
+
     let mut sess = Session::new()?;
     sess.set_tcp_stream(tcp);
     sess.handshake()?;
@@ -127,8 +127,7 @@ fn do_backup(host: &str, user: &str, output: Option<PathBuf>) -> Result<()> {
     channel.exec(&tar_cmd)?;
 
     // Read tar output and compress
-    let file = File::create(&output_path)
-        .context("Failed to create output file")?;
+    let file = File::create(&output_path).context("Failed to create output file")?;
     let mut encoder = GzEncoder::new(file, Compression::best());
 
     let mut buffer = [0u8; 8192];
@@ -149,7 +148,7 @@ fn do_backup(host: &str, user: &str, output: Option<PathBuf>) -> Result<()> {
 
 fn find_latest_backup(host: &str) -> Option<PathBuf> {
     let pattern = format!("{}-backup-*.tgz", host);
-    
+
     // Find all matching files
     let mut backups: Vec<PathBuf> = std::fs::read_dir(".")
         .ok()?
@@ -172,14 +171,14 @@ fn do_restore(host: &str, user: &str, backup: Option<PathBuf>) -> Result<()> {
     } else {
         let found = find_latest_backup(host)
             .context("Can't find backup file. Please specify one with '-b'.")?;
-        
+
         println!("@ Found backup file: {:?}", found);
         print!("@ Continue restoring this file? (y/n) ");
         std::io::stdout().flush()?;
 
         let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
-        
+
         if !input.trim().eq_ignore_ascii_case("y") {
             anyhow::bail!("Restore cancelled by user");
         }
@@ -211,7 +210,7 @@ fn do_restore(host: &str, user: &str, backup: Option<PathBuf>) -> Result<()> {
     println!("{}", output);
 
     channel.wait_close()?;
-    
+
     println!("@ Restore finished.");
     Ok(())
 }

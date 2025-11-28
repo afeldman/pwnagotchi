@@ -39,7 +39,7 @@ impl Epoch {
 
     pub fn next(&mut self) {
         self.epoch += 1;
-        
+
         if self.any_activity() {
             self.active_for += 1;
             self.inactive_for = 0;
@@ -48,7 +48,7 @@ impl Epoch {
         } else {
             self.inactive_for += 1;
             self.active_for = 0;
-            
+
             if self.inactive_for >= 10 {
                 self.bored_for += 1;
             }
@@ -363,7 +363,10 @@ impl Automata {
         let factor = self.epoch.inactive_for as f32 / self.config.bored_num_epochs as f32;
         if !self.has_support_network_for(factor) {
             self.mood = Mood::Bored;
-            warn!("{} epochs with no activity -> bored", self.epoch.inactive_for);
+            warn!(
+                "{} epochs with no activity -> bored",
+                self.epoch.inactive_for
+            );
         } else {
             info!("Unit is grateful instead of bored");
             self.set_grateful();
@@ -384,7 +387,10 @@ impl Automata {
     pub fn set_angry(&mut self, factor: f32) {
         if !self.has_support_network_for(factor) {
             self.mood = Mood::Angry;
-            warn!("{} epochs with no activity -> angry", self.epoch.inactive_for);
+            warn!(
+                "{} epochs with no activity -> angry",
+                self.epoch.inactive_for
+            );
         } else {
             info!("Unit is grateful instead of angry");
             self.set_grateful();
@@ -504,11 +510,14 @@ impl Automata {
     /// assert_eq!(automata.peers().len(), 2);
     /// ```
     pub fn add_peer(&mut self, fingerprint: String) {
-        let peer = self.peers.entry(fingerprint.clone()).or_insert_with(|| Peer {
-            fingerprint: fingerprint.clone(),
-            encounters: 0,
-            last_seen: chrono::Utc::now(),
-        });
+        let peer = self
+            .peers
+            .entry(fingerprint.clone())
+            .or_insert_with(|| Peer {
+                fingerprint: fingerprint.clone(),
+                encounters: 0,
+                last_seen: chrono::Utc::now(),
+            });
         peer.encounters += 1;
         peer.last_seen = chrono::Utc::now();
     }

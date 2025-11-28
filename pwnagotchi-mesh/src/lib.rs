@@ -19,7 +19,7 @@
 //!
 //! // Generate new identity
 //! let identity = MeshIdentity::generate("MyPwnagotchi");
-//! 
+//!
 //! println!("Fingerprint: {}", identity.fingerprint());
 //! println!("Name: {}", identity.name());
 //! ```
@@ -55,7 +55,7 @@
 //!
 //! // Create advertisement with current stats
 //! let ad = advertiser.create_advertisement(10, 100, 3600);
-//! 
+//!
 //! println!("Advertisement from {}", ad.name);
 //! ```
 
@@ -229,7 +229,11 @@ impl MeshIdentity {
     /// let identity = MeshIdentity::from_keys(&secret, &public, "SavedUnit")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn from_keys(secret: &[u8], public: &[u8], name: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_keys(
+        secret: &[u8],
+        public: &[u8],
+        name: &str,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let secret_key = SecretKey::from_bytes(secret)?;
         let public_key = PublicKey::from_bytes(public)?;
         let keypair = Keypair {
@@ -302,7 +306,7 @@ impl MeshIdentity {
     ///
     /// let identity = MeshIdentity::generate("Verifier");
     /// let message = b"Test message";
-    /// 
+    ///
     /// let signature = identity.sign(message);
     ///
     /// // Verify with correct key
@@ -375,7 +379,13 @@ impl MeshAdvertiser {
         // Verify signature
         let message = format!(
             "{}:{}:{}:{}:{}:{}:{}",
-            adv.fingerprint, adv.name, adv.pwnd_run, adv.pwnd_tot, adv.uptime, adv.version, adv.timestamp
+            adv.fingerprint,
+            adv.name,
+            adv.pwnd_run,
+            adv.pwnd_tot,
+            adv.uptime,
+            adv.version,
+            adv.timestamp
         );
 
         let public_key = match hex::decode(&adv.identity) {
@@ -383,7 +393,10 @@ impl MeshAdvertiser {
             Err(_) => return false,
         };
 
-        if !self.identity.verify(message.as_bytes(), &adv.signature, &public_key) {
+        if !self
+            .identity
+            .verify(message.as_bytes(), &adv.signature, &public_key)
+        {
             debug!("Invalid signature from peer {}", adv.fingerprint);
             return false;
         }
@@ -415,9 +428,8 @@ impl MeshAdvertiser {
     /// Remove stale peers
     pub fn cleanup_peers(&mut self, max_age_secs: i64) {
         let now = chrono::Utc::now();
-        self.peers.retain(|_, peer| {
-            (now - peer.last_seen).num_seconds() < max_age_secs
-        });
+        self.peers
+            .retain(|_, peer| (now - peer.last_seen).num_seconds() < max_age_secs);
     }
 }
 
@@ -437,7 +449,7 @@ mod tests {
         let identity = MeshIdentity::generate("test");
         let message = b"Hello, mesh!";
         let signature = identity.sign(message);
-        
+
         assert!(identity.verify(message, &signature, identity.public_key()));
     }
 
@@ -445,9 +457,9 @@ mod tests {
     fn test_advertisement() {
         let identity = MeshIdentity::generate("test");
         let advertiser = MeshAdvertiser::new(identity);
-        
+
         let adv = advertiser.create_advertisement(5, 100, 3600, "2.8.9");
-        
+
         assert_eq!(adv.pwnd_run, 5);
         assert_eq!(adv.pwnd_tot, 100);
         assert_eq!(adv.version, "2.8.9");

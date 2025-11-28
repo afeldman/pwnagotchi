@@ -31,13 +31,13 @@
 //! ```
 
 use anyhow::Result;
+use futures::{SinkExt, StreamExt};
 use reqwest::{Client as HttpClient, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use futures::{SinkExt, StreamExt};
 use tracing::{debug, error, info, warn};
 
 /// Represents a Bettercap session with interface and module information.
@@ -53,7 +53,7 @@ use tracing::{debug, error, info, warn};
 /// # async fn main() -> anyhow::Result<()> {
 /// let client = BettercapClient::new("localhost", "http", 8081, "user", "pass")?;
 /// let session = client.session().await?;
-/// 
+///
 /// println!("Session started at: {}", session.started_at);
 /// println!("Number of interfaces: {}", session.interfaces.len());
 /// # Ok(())
@@ -100,7 +100,7 @@ pub struct CommandResult {
 /// # async fn main() -> anyhow::Result<()> {
 /// # let client = BettercapClient::new("localhost", "http", 8081, "user", "pass")?;
 /// let mut events = client.start_websocket().await?;
-/// 
+///
 /// while let Some(event) = events.recv().await {
 ///     match event.tag.as_str() {
 ///         "wifi.ap.new" => println!("New AP: {:?}", event.data),
@@ -225,8 +225,7 @@ impl BettercapClient {
         );
 
         Ok(Self {
-            http: HttpClient::builder()
-                .build()?,
+            http: HttpClient::builder().build()?,
             base_url: Url::parse(&base)?,
             ws_url: Url::parse(&ws_base)?,
             username: username.to_string(),
@@ -251,11 +250,11 @@ impl BettercapClient {
     /// # async fn main() -> anyhow::Result<()> {
     /// # let client = BettercapClient::new("localhost", "http", 8081, "user", "pass")?;
     /// let session = client.session().await?;
-    /// 
+    ///
     /// println!("Session ID: {}", session.id);
     /// println!("Started at: {}", session.started_at);
     /// println!("Active: {}", session.active);
-    /// 
+    ///
     /// for iface in &session.interfaces {
     ///     println!("Interface: {} ({})", iface.name, iface.mac);
     /// }
@@ -264,8 +263,9 @@ impl BettercapClient {
     /// ```
     pub async fn session(&self) -> Result<Session> {
         let url = self.base_url.join("session")?;
-        
-        let response = self.http
+
+        let response = self
+            .http
             .get(url)
             .basic_auth(&self.username, Some(&self.password))
             .send()
@@ -311,13 +311,14 @@ impl BettercapClient {
     /// ```
     pub async fn run(&self, command: &str) -> Result<CommandResult> {
         let url = self.base_url.join("session")?;
-        
+
         let mut cmd = HashMap::new();
         cmd.insert("cmd", command);
 
         debug!("Running bettercap command: {}", command);
 
-        let response = self.http
+        let response = self
+            .http
             .post(url)
             .basic_auth(&self.username, Some(&self.password))
             .json(&cmd)
@@ -325,7 +326,7 @@ impl BettercapClient {
             .await?;
 
         let result: CommandResult = response.json().await?;
-        
+
         if !result.success {
             warn!("Command failed: {:?}", result.error);
         }
@@ -362,7 +363,8 @@ impl BettercapClient {
     /// ```
     pub async fn is_module_running(&self, module: &str) -> Result<bool> {
         let session = self.session().await?;
-        Ok(session.modules
+        Ok(session
+            .modules
             .get(module)
             .map(|m| m.running)
             .unwrap_or(false))
@@ -483,11 +485,11 @@ impl BettercapClient {
         let (tx, rx) = mpsc::unbounded_channel();
 
         let url_str = ws_url.to_string();
-        
+
         tokio::spawn(async move {
             loop {
                 info!("Connecting to bettercap websocket: {}", url_str);
-                
+
                 match connect_async(&url_str).await {
                     Ok((ws_stream, _)) => {
                         info!("Websocket connected");
@@ -540,13 +542,7 @@ mod tests {
 
     #[test]
     fn test_client_creation() {
-        let client = BettercapClient::new(
-            "localhost",
-            "http",
-            8081,
-            "user",
-            "pass"
-        );
+        let client = BettercapClient::new("localhost", "http", 8081, "user", "pass");
         assert!(client.is_ok());
     }
 }

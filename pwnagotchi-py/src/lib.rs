@@ -194,7 +194,7 @@ impl PythonPlugin {
     fn call_method(&self, method: &str, args: impl IntoPy<Py<pyo3::types::PyTuple>>) -> Result<()> {
         Python::with_gil(|py| {
             let instance = self.instance.as_ref(py);
-            
+
             // Check if method exists
             if !instance.hasattr(method)? {
                 debug!("Python plugin doesn't implement {}", method);
@@ -202,11 +202,11 @@ impl PythonPlugin {
             }
 
             // Call method
-            instance
-                .call_method1(method, args)?;
-            
+            instance.call_method1(method, args)?;
+
             Ok(())
-        }).map_err(|e: PyErr| {
+        })
+        .map_err(|e: PyErr| {
             error!("Python plugin error in {}: {}", method, e);
             anyhow::anyhow!("Python error: {}", e)
         })
@@ -224,7 +224,7 @@ impl PythonPlugin {
         tokio::task::spawn_blocking(move || {
             Python::with_gil(|py| {
                 let inst = instance.as_ref(py);
-                
+
                 // Check if method exists
                 if !inst.hasattr(&method)? {
                     return Ok(());
@@ -232,7 +232,7 @@ impl PythonPlugin {
 
                 // Call method
                 inst.call_method1(&method, args)?;
-                
+
                 Ok(())
             })
         })
@@ -333,11 +333,15 @@ impl Plugin for PythonPlugin {
     }
 
     async fn on_peer_detected(&mut self, peer_fingerprint: &str) {
-        let _ = self.call_async_method("on_peer_detected", (peer_fingerprint,)).await;
+        let _ = self
+            .call_async_method("on_peer_detected", (peer_fingerprint,))
+            .await;
     }
 
     async fn on_peer_lost(&mut self, peer_fingerprint: &str) {
-        let _ = self.call_async_method("on_peer_lost", (peer_fingerprint,)).await;
+        let _ = self
+            .call_async_method("on_peer_lost", (peer_fingerprint,))
+            .await;
     }
 }
 

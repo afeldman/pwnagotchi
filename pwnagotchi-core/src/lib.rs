@@ -305,13 +305,27 @@ impl Agent {
         let iface = &self.config.main.iface;
         let cfg = &self.config.personality;
 
-        self.bettercap.run(&format!("set wifi.interface {}", iface)).await?;
-        self.bettercap.run(&format!("set wifi.ap.ttl {}", cfg.ap_ttl)).await?;
-        self.bettercap.run(&format!("set wifi.sta.ttl {}", cfg.sta_ttl)).await?;
-        self.bettercap.run(&format!("set wifi.rssi.min {}", cfg.min_rssi)).await?;
-        self.bettercap.run(&format!("set wifi.handshakes.file {}", 
-            self.config.bettercap.handshakes.display())).await?;
-        self.bettercap.run("set wifi.handshakes.aggregate false").await?;
+        self.bettercap
+            .run(&format!("set wifi.interface {}", iface))
+            .await?;
+        self.bettercap
+            .run(&format!("set wifi.ap.ttl {}", cfg.ap_ttl))
+            .await?;
+        self.bettercap
+            .run(&format!("set wifi.sta.ttl {}", cfg.sta_ttl))
+            .await?;
+        self.bettercap
+            .run(&format!("set wifi.rssi.min {}", cfg.min_rssi))
+            .await?;
+        self.bettercap
+            .run(&format!(
+                "set wifi.handshakes.file {}",
+                self.config.bettercap.handshakes.display()
+            ))
+            .await?;
+        self.bettercap
+            .run("set wifi.handshakes.aggregate false")
+            .await?;
 
         Ok(())
     }
@@ -340,7 +354,10 @@ impl Agent {
             }
         }
 
-        info!("Handshakes will be collected inside {:?}", self.config.bettercap.handshakes);
+        info!(
+            "Handshakes will be collected inside {:?}",
+            self.config.bettercap.handshakes
+        );
 
         self.reset_wifi_settings().await?;
 
@@ -368,12 +385,15 @@ impl Agent {
             debug!("RECON {}s", recon_time);
             self.bettercap.run("wifi.recon.channel clear").await?;
         } else {
-            let channel_str = channels.iter()
+            let channel_str = channels
+                .iter()
                 .map(|c| c.to_string())
                 .collect::<Vec<_>>()
                 .join(",");
             debug!("RECON {}s ON CHANNELS {}", recon_time, channel_str);
-            self.bettercap.run(&format!("wifi.recon.channel {}", channel_str)).await?;
+            self.bettercap
+                .run(&format!("wifi.recon.channel {}", channel_str))
+                .await?;
         }
 
         tokio::time::sleep(tokio::time::Duration::from_secs(recon_time as u64)).await;
@@ -415,7 +435,7 @@ impl Agent {
     fn on_handshake(&mut self, event: &BettercapEvent) {
         info!("Handshake captured!");
         self.automata.epoch().track_handshake();
-        
+
         // Parse handshake event and save to list
         // Trigger plugin hooks
     }
@@ -451,7 +471,7 @@ impl Agent {
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
     /// let mut agent = Agent::new(AgentConfig::default())?;
-    /// 
+    ///
     /// // Start the agent (this will run indefinitely)
     /// agent.start().await?;
     /// # Ok(())
@@ -462,9 +482,9 @@ impl Agent {
 
         self.wait_bettercap().await?;
         self.setup_events().await?;
-        
+
         self.automata.set_starting();
-        
+
         self.start_monitor_mode().await?;
 
         // Start event processing
@@ -535,9 +555,9 @@ impl Agent {
     /// # fn example(agent: &Agent) {
     /// let aps = agent.access_points();
     /// println!("Found {} access points", aps.len());
-    /// 
+    ///
     /// for (bssid, ap) in aps {
-    ///     println!("  {} - {} (ch {}, {} dBm)", 
+    ///     println!("  {} - {} (ch {}, {} dBm)",
     ///         bssid, ap.essid, ap.channel, ap.rssi);
     /// }
     /// # }
@@ -555,9 +575,9 @@ impl Agent {
     /// # fn example(agent: &Agent) {
     /// let handshakes = agent.handshakes();
     /// println!("Captured {} handshakes", handshakes.len());
-    /// 
+    ///
     /// for hs in handshakes {
-    ///     println!("  {} - {} ({})", 
+    ///     println!("  {} - {} ({})",
     ///         hs.filename, hs.ap_bssid, hs.handshake_type);
     /// }
     /// # }

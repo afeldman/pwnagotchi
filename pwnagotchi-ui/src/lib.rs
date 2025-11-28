@@ -266,8 +266,10 @@ impl Display for MockDisplay {
         println!("=== Pwnagotchi Display ===");
         println!("Status: {}", state.status);
         println!("Face: {}", state.face);
-        println!("Channel: {} | APs: {} | Handshakes: {}", 
-                 state.channel, state.aps, state.handshakes);
+        println!(
+            "Channel: {} | APs: {} | Handshakes: {}",
+            state.channel, state.aps, state.handshakes
+        );
         println!("Uptime: {} | Mode: {}", state.uptime, state.mode);
         println!("========================");
         Ok(())
@@ -398,13 +400,13 @@ mod tests {
     fn test_view_state() {
         let mut state = ViewState::default();
         assert_eq!(state.status, "Starting...");
-        
+
         state.set_mood(Mood::Excited);
         assert_eq!(state.face, faces::EXCITED);
-        
+
         state.set_channel(6);
         assert_eq!(state.channel, "6");
-        
+
         state.set_aps(10);
         assert_eq!(state.aps, 10);
     }
@@ -413,7 +415,7 @@ mod tests {
     fn test_mock_display() {
         let mut display = MockDisplay::new();
         display.init().unwrap();
-        
+
         let state = ViewState {
             status: "Test".to_string(),
             face: faces::HAPPY.to_string(),
@@ -423,7 +425,7 @@ mod tests {
             uptime: "01:23:45".to_string(),
             mode: "AUTO".to_string(),
         };
-        
+
         display.render(&state).unwrap();
         assert_eq!(display.state().aps, 5);
     }

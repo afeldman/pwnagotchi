@@ -35,10 +35,10 @@ enum Commands {
         #[arg(short, long)]
         manual: bool,
     },
-    
+
     /// Show version information
     Version,
-    
+
     /// Validate configuration file
     CheckConfig {
         /// Configuration file to check
@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
     match &cli.command {
         Some(Commands::Start { manual }) => {
             info!("Starting pwnagotchi...");
-            
+
             let config = if let Some(config_path) = &cli.config {
                 load_config(config_path)?
             } else {
@@ -79,25 +79,25 @@ async fn main() -> Result<()> {
             };
 
             let mut agent = Agent::new(config)?;
-            
+
             if *manual {
                 info!("Running in MANUAL mode");
             }
 
             agent.start().await?;
         }
-        
+
         Some(Commands::Version) => {
             println!("pwnagotchi v2.8.9 (Rust)");
             println!("WiFi handshake capture tool");
         }
-        
+
         Some(Commands::CheckConfig { config }) => {
             info!("Checking configuration: {:?}", config);
             let _cfg = load_config(config)?;
             println!("✓ Configuration is valid");
         }
-        
+
         None => {
             // Default: show help
             println!("Use --help for usage information");
