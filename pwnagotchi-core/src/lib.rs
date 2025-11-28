@@ -57,42 +57,149 @@ impl Default for AgentConfig {
     }
 }
 
-/// WiFi Access Point
+/// Represents a WiFi Access Point.
+///
+/// Contains information about a discovered WiFi AP including signal strength,
+/// encryption, connected clients, and network activity.
+///
+/// # Examples
+///
+/// ```
+/// # use pwnagotchi_core::AccessPoint;
+/// let ap = AccessPoint {
+///     bssid: "aa:bb:cc:dd:ee:ff".to_string(),
+///     essid: "MyNetwork".to_string(),
+///     channel: 6,
+///     rssi: -45,
+///     encryption: "WPA2".to_string(),
+///     clients: vec!["11:22:33:44:55:66".to_string()],
+///     sent: 1024,
+///     received: 2048,
+///     last_seen: chrono::Utc::now(),
+/// };
+///
+/// println!("AP {} on channel {}", ap.essid, ap.channel);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessPoint {
+    /// BSSID (MAC address) of the access point
     pub bssid: String,
+    /// ESSID (network name) of the access point
     pub essid: String,
+    /// WiFi channel (1-14 for 2.4GHz, 36+ for 5GHz)
     pub channel: u8,
+    /// Received Signal Strength Indicator in dBm
     pub rssi: i32,
+    /// Encryption type (e.g., "WPA2", "WPA3", "Open")
     pub encryption: String,
+    /// List of connected client MAC addresses
     pub clients: Vec<String>,
+    /// Number of packets sent by the AP
     pub sent: u64,
+    /// Number of packets received by the AP
     pub received: u64,
+    /// Last time this AP was seen
     pub last_seen: chrono::DateTime<chrono::Utc>,
 }
 
-/// WiFi Client Station
+/// Represents a WiFi client station.
+///
+/// Contains information about a client device connected to an access point.
+///
+/// # Examples
+///
+/// ```
+/// # use pwnagotchi_core::Station;
+/// let station = Station {
+///     mac: "11:22:33:44:55:66".to_string(),
+///     ap_bssid: "aa:bb:cc:dd:ee:ff".to_string(),
+///     rssi: -60,
+///     sent: 512,
+///     received: 1024,
+///     last_seen: chrono::Utc::now(),
+/// };
+///
+/// println!("Station {} connected to {}", station.mac, station.ap_bssid);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Station {
+    /// MAC address of the client station
     pub mac: String,
+    /// BSSID of the connected access point
     pub ap_bssid: String,
+    /// Received Signal Strength Indicator in dBm
     pub rssi: i32,
+    /// Number of packets sent by the station
     pub sent: u64,
+    /// Number of packets received by the station
     pub received: u64,
+    /// Last time this station was seen
     pub last_seen: chrono::DateTime<chrono::Utc>,
 }
 
-/// Handshake capture event
+/// Represents a captured WPA handshake.
+///
+/// Contains metadata about a captured handshake that can be used for
+/// offline password cracking.
+///
+/// # Examples
+///
+/// ```
+/// # use pwnagotchi_core::Handshake;
+/// let handshake = Handshake {
+///     filename: "handshake_aa_bb_cc_dd_ee_ff.pcap".to_string(),
+///     ap_bssid: "aa:bb:cc:dd:ee:ff".to_string(),
+///     station_mac: "11:22:33:44:55:66".to_string(),
+///     timestamp: chrono::Utc::now(),
+///     handshake_type: "full".to_string(),
+/// };
+///
+/// println!("Captured {} handshake: {}", handshake.handshake_type, handshake.filename);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Handshake {
+    /// Filename of the captured handshake PCAP
     pub filename: String,
+    /// BSSID of the access point
     pub ap_bssid: String,
+    /// MAC address of the client station
     pub station_mac: String,
+    /// Time when the handshake was captured
     pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub handshake_type: String, // PMKID, full, half
+    /// Type of handshake: "PMKID", "full", or "half"
+    pub handshake_type: String,
 }
 
-/// Main agent implementation
+/// Main Pwnagotchi agent orchestrating WiFi monitoring and attacks.
+///
+/// The agent manages the Bettercap client, tracks access points and stations,
+/// captures handshakes, and coordinates with the automata for mood-based behavior.
+///
+/// # Examples
+///
+/// ## Basic Setup
+///
+/// ```no_run
+/// # use pwnagotchi_core::{Agent, AgentConfig};
+/// # #[tokio::main]
+/// # async fn main() -> anyhow::Result<()> {
+/// let config = AgentConfig::default();
+/// let mut agent = Agent::new(config)?;
+/// agent.start().await?;
+/// # Ok(())
+/// # }
+/// ```
+///
+/// ## Checking State
+///
+/// ```no_run
+/// # use pwnagotchi_core::{Agent, AgentConfig};
+/// # fn example(agent: &Agent) {
+/// println!("Visible APs: {}", agent.access_points().len());
+/// println!("Handshakes: {}", agent.handshakes().len());
+/// println!("Current mood: {:?}", agent.mood());
+/// # }
+/// ```
 pub struct Agent {
     config: AgentConfig,
     bettercap: BettercapClient,
@@ -107,7 +214,36 @@ pub struct Agent {
 }
 
 impl Agent {
-    /// Create new agent instance
+    /// Creates a new agent instance.
+    ///
+    /// Initializes the Bettercap client, automata, and creates the handshakes directory.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - Complete agent configuration
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the agent or an error if initialization fails.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// - Bettercap client initialization fails (invalid URL, etc.)
+    /// - Handshakes directory cannot be created
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use pwnagotchi_core::{Agent, AgentConfig};
+    /// // Using default configuration
+    /// let agent = Agent::new(AgentConfig::default())?;
+    ///
+    /// // Using custom configuration
+    /// let config = AgentConfig::default();
+    /// let agent = Agent::new(config)?;
+    /// # Ok::<(), anyhow::Error>(())
+    /// ```
     pub fn new(config: AgentConfig) -> Result<Self> {
         let bettercap = BettercapClient::new(
             &config.bettercap.hostname,
@@ -284,7 +420,43 @@ impl Agent {
         // Trigger plugin hooks
     }
 
-    /// Start the agent
+    /// Starts the agent and begins WiFi monitoring.
+    ///
+    /// This method:
+    /// 1. Waits for Bettercap to become available
+    /// 2. Sets up event handling
+    /// 3. Starts monitor mode on the WiFi interface
+    /// 4. Begins WebSocket event stream
+    /// 5. Enters the main reconnaissance loop
+    ///
+    /// The agent will continuously cycle through WiFi channels, monitor for
+    /// access points and clients, and capture handshakes.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if successful, or an error if startup fails.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// - Bettercap is not accessible
+    /// - Monitor mode cannot be enabled
+    /// - WebSocket connection fails
+    /// - WiFi configuration is invalid
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use pwnagotchi_core::{Agent, AgentConfig};
+    /// # #[tokio::main]
+    /// # async fn main() -> anyhow::Result<()> {
+    /// let mut agent = Agent::new(AgentConfig::default())?;
+    /// 
+    /// // Start the agent (this will run indefinitely)
+    /// agent.start().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn start(&mut self) -> Result<()> {
         info!("Starting pwnagotchi agent");
 
@@ -334,14 +506,62 @@ impl Agent {
         }
     }
 
+    /// Returns the current agent mood.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use pwnagotchi_core::{Agent, AgentConfig};
+    /// # use pwnagotchi_automata::Mood;
+    /// # fn example(agent: &Agent) {
+    /// match agent.mood() {
+    ///     Mood::Ready => println!("Agent is ready"),
+    ///     Mood::Excited => println!("Capturing handshakes!"),
+    ///     Mood::Bored => println!("No activity..."),
+    ///     _ => {}
+    /// }
+    /// # }
+    /// ```
     pub fn mood(&self) -> Mood {
         self.automata.mood()
     }
 
+    /// Returns a reference to all discovered access points.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use pwnagotchi_core::{Agent, AgentConfig};
+    /// # fn example(agent: &Agent) {
+    /// let aps = agent.access_points();
+    /// println!("Found {} access points", aps.len());
+    /// 
+    /// for (bssid, ap) in aps {
+    ///     println!("  {} - {} (ch {}, {} dBm)", 
+    ///         bssid, ap.essid, ap.channel, ap.rssi);
+    /// }
+    /// # }
+    /// ```
     pub fn access_points(&self) -> &HashMap<String, AccessPoint> {
         &self.access_points
     }
 
+    /// Returns a reference to all captured handshakes.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use pwnagotchi_core::{Agent, AgentConfig};
+    /// # fn example(agent: &Agent) {
+    /// let handshakes = agent.handshakes();
+    /// println!("Captured {} handshakes", handshakes.len());
+    /// 
+    /// for hs in handshakes {
+    ///     println!("  {} - {} ({})", 
+    ///         hs.filename, hs.ap_bssid, hs.handshake_type);
+    /// }
+    /// # }
+    /// ```
     pub fn handshakes(&self) -> &[Handshake] {
         &self.handshakes
     }

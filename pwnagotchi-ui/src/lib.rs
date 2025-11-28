@@ -1,3 +1,67 @@
+//! UI system for Pwnagotchi display rendering.
+//!
+//! This crate provides a display abstraction and rendering system for e-ink displays.
+//! It includes face expressions, status rendering, and a trait-based display system.
+//!
+//! # Architecture
+//!
+//! - **Display trait**: Generic interface for different display types
+//! - **ViewState**: Current UI state (mood, status, statistics)
+//! - **Face expressions**: ASCII art faces for different moods
+//!
+//! # Examples
+//!
+//! ## Using ViewState
+//!
+//! ```
+//! use pwnagotchi_ui::{ViewState, faces};
+//! use pwnagotchi_automata::Mood;
+//!
+//! let mut view = ViewState::default();
+//!
+//! // Update mood
+//! view.set_mood(Mood::Excited);
+//! assert_eq!(view.face, faces::EXCITED);
+//!
+//! // Update statistics
+//! view.set_aps(15);
+//! view.set_handshakes(3);
+//! view.set_channel(6);
+//! view.set_status("Scanning...".to_string());
+//! ```
+//!
+//! ## Implementing Display
+//!
+//! ```no_run
+//! use pwnagotchi_ui::{Display, ViewState};
+//! use anyhow::Result;
+//!
+//! struct MyDisplay;
+//!
+//! impl Display for MyDisplay {
+//!     fn init(&mut self) -> Result<()> {
+//!         println!("Display initialized");
+//!         Ok(())
+//!     }
+//!
+//!     fn clear(&mut self) -> Result<()> {
+//!         println!("Display cleared");
+//!         Ok(())
+//!     }
+//!
+//!     fn render(&mut self, view: &ViewState) -> Result<()> {
+//!         println!("Rendering: {} - {} APs, {} handshakes",
+//!             view.face, view.aps, view.handshakes);
+//!         Ok(())
+//!     }
+//!
+//!     fn update(&mut self) -> Result<()> {
+//!         println!("Display updated");
+//!         Ok(())
+//!     }
+//! }
+//! ```
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyle},
     pixelcolor::BinaryColor,
@@ -7,7 +71,25 @@ use embedded_graphics::{
 };
 use pwnagotchi_automata::Mood;
 
-/// Face expressions for different moods
+/// ASCII face expressions for different agent moods.
+///
+/// Each constant represents a different emotional state using Unicode characters.
+///
+/// # Examples
+///
+/// ```
+/// use pwnagotchi_ui::faces;
+/// use pwnagotchi_automata::Mood;
+///
+/// let face = match Mood::Excited {
+///     Mood::Excited => faces::EXCITED,
+///     Mood::Bored => faces::BORED,
+///     Mood::Sad => faces::SAD,
+///     _ => faces::HAPPY,
+/// };
+///
+/// println!("Agent face: {}", face);
+/// ```
 pub mod faces {
     pub const HAPPY: &str = "(◕‿◕)";
     pub const SAD: &str = "(╥﹏╥)";
@@ -20,7 +102,33 @@ pub mod faces {
     pub const SMART: &str = "(✜‿✜)";
 }
 
-/// UI View components
+/// Current state of the UI view.
+///
+/// Contains all information needed to render the current agent state
+/// including mood, statistics, and status messages.
+///
+/// # Examples
+///
+/// ```
+/// use pwnagotchi_ui::ViewState;
+/// use pwnagotchi_automata::Mood;
+///
+/// let mut view = ViewState::default();
+///
+/// // Update view state
+/// view.set_mood(Mood::Excited);
+/// view.set_status("Capturing handshakes!".to_string());
+/// view.set_aps(20);
+/// view.set_handshakes(5);
+/// view.set_channel(11);
+/// view.set_uptime("02:30:15".to_string());
+///
+/// // Access view data
+/// println!("Status: {}", view.status);
+/// println!("Face: {}", view.face);
+/// println!("Stats: {} APs, {} handshakes on channel {}",
+///     view.aps, view.handshakes, view.channel);
+/// ```
 #[derive(Debug, Clone)]
 pub struct ViewState {
     pub status: String,
@@ -92,12 +200,31 @@ impl ViewState {
     }
 }
 
-/// UI Renderer for e-ink displays
+/// Display trait for e-ink screen implementations.
+///
+/// Implement this trait to support different display hardware.
+/// The trait provides methods for initialization, clearing, rendering, and updating.
+///
+/// # Examples
+///
+/// See the crate-level documentation for a complete implementation example.
 pub trait Display {
-    /// Initialize the display
+    /// Initializes the display hardware.
+    ///
+    /// Called once during startup to configure the display.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if hardware initialization fails.
     fn init(&mut self) -> Result<(), Box<dyn std::error::Error>>;
 
-    /// Clear the display
+    /// Clears the display buffer.
+    ///
+    /// Removes all content from the display, typically setting all pixels to white.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the display cannot be cleared.
     fn clear(&mut self) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Render the view state

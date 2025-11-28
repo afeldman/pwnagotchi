@@ -1,9 +1,102 @@
+//! Plugin system for extending Pwnagotchi functionality.
+//!
+//! This crate provides an async trait-based plugin system that allows
+//! extending the agent's behavior through lifecycle hooks.
+//!
+//! # Plugin Hooks
+//!
+//! Plugins can implement various hooks to respond to agent events:
+//! - **Lifecycle**: on_loaded, on_unload, on_ready, on_starting, on_rebooting
+//! - **Activity**: on_handshake, on_association, on_deauthentication
+//! - **State**: on_epoch, on_mood_change, on_wifi_update
+//! - **Network**: on_peer_detected, on_peer_lost, on_internet_available
+//! - **Events**: on_bettercap_event, on_channel_hop
+//!
+//! # Examples
+//!
+//! ## Creating a Plugin
+//!
+//! ```
+//! use async_trait::async_trait;
+//! use pwnagotchi_plugins::Plugin;
+//! use pwnagotchi_automata::Mood;
+//! use pwnagotchi_core::{AccessPoint, Station};
+//!
+//! struct MyPlugin {
+//!     handshake_count: u32,
+//! }
+//!
+//! #[async_trait]
+//! impl Plugin for MyPlugin {
+//!     fn name(&self) -> &str {
+//!         "my_plugin"
+//!     }
+//!
+//!     fn version(&self) -> &str {
+//!         "1.0.0"
+//!     }
+//!
+//!     fn description(&self) -> &str {
+//!         "Example plugin that counts handshakes"
+//!     }
+//!
+//!     async fn on_loaded(&mut self) {
+//!         println!("Plugin loaded!");
+//!     }
+//!
+//!     async fn on_handshake(
+//!         &mut self,
+//!         filename: &str,
+//!         access_point: &AccessPoint,
+//!         _station: &Station,
+//!     ) {
+//!         self.handshake_count += 1;
+//!         println!("Handshake #{} captured: {} ({})", 
+//!             self.handshake_count, access_point.essid, filename);
+//!     }
+//!
+//!     async fn on_mood_change(&mut self, old_mood: Mood, new_mood: Mood) {
+//!         println!("Mood changed: {:?} -> {:?}", old_mood, new_mood);
+//!     }
+//! }
+//! ```
+//!
+//! ## Using the Plugin Manager
+//!
+//! ```
+//! # use pwnagotchi_plugins::PluginManager;
+//! # struct MyPlugin;
+//! # #[async_trait::async_trait]
+//! # impl pwnagotchi_plugins::Plugin for MyPlugin {
+//! #     fn name(&self) -> &str { "my_plugin" }
+//! #     fn version(&self) -> &str { "1.0.0" }
+//! #     fn description(&self) -> &str { "Example" }
+//! # }
+//! # #[tokio::main]
+//! # async fn main() {
+//! let mut manager = PluginManager::new();
+//! 
+//! // Register plugin
+//! manager.register(Box::new(MyPlugin));
+//! 
+//! // Load all plugins
+//! manager.on_loaded().await;
+//! # }
+//! ```
+
 use async_trait::async_trait;
 use pwnagotchi_automata::{Epoch, Mood};
 use pwnagotchi_core::{AccessPoint, Handshake, Station};
 use serde_json::Value;
 
-/// Plugin trait for extending agent functionality
+/// Plugin trait for extending agent functionality.
+///
+/// Implement this trait to create custom plugins that respond to agent events.
+/// All methods have default implementations and are optional.
+///
+/// # Examples
+///
+/// See the crate-level documentation for a complete example.
 #[async_trait]
 pub trait Plugin: Send + Sync {
     /// Plugin name
@@ -76,19 +169,70 @@ pub trait Plugin: Send + Sync {
     async fn on_bettercap_event(&mut self, _event_tag: &str, _event_data: &Value) {}
 }
 
-/// Plugin manager
+/// Manages registered plugins and triggers their lifecycle hooks.
+///
+/// The plugin manager coordinates plugin execution and ensures all
+/// registered plugins receive relevant events.
+///
+/// # Examples
+///
+/// ```
+/// use pwnagotchi_plugins::PluginManager;
+/// use pwnagotchi_automata::Mood;
+///
+/// # #[tokio::main]
+/// # async fn main() {
+/// let mut manager = PluginManager::new();
+/// 
+/// // Trigger lifecycle events
+/// manager.on_loaded().await;
+/// manager.on_ready().await;
+///
+/// // Trigger mood change
+/// manager.on_mood_change(Mood::Ready, Mood::Excited).await;
+/// # }
+/// ```
 pub struct PluginManager {
     plugins: Vec<Box<dyn Plugin>>,
 }
 
 impl PluginManager {
+    /// Creates a new empty plugin manager.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pwnagotchi_plugins::PluginManager;
+    /// let manager = PluginManager::new();
+    /// assert_eq!(manager.plugins().len(), 0);
+    /// ```
     pub fn new() -> Self {
         Self {
             plugins: Vec::new(),
         }
     }
 
-    /// Register a plugin
+    /// Registers a plugin with the manager.
+    ///
+    /// # Arguments
+    ///
+    /// * `plugin` - Boxed plugin implementation
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pwnagotchi_plugins::PluginManager;
+    /// # struct MyPlugin;
+    /// # #[async_trait::async_trait]
+    /// # impl pwnagotchi_plugins::Plugin for MyPlugin {
+    /// #     fn name(&self) -> &str { "my_plugin" }
+    /// #     fn version(&self) -> &str { "1.0.0" }
+    /// #     fn description(&self) -> &str { "Example" }
+    /// # }
+    /// let mut manager = PluginManager::new();
+    /// manager.register(Box::new(MyPlugin));
+    /// assert_eq!(manager.plugins().len(), 1);
+    /// ```
     pub fn register(&mut self, plugin: Box<dyn Plugin>) {
         self.plugins.push(plugin);
     }

@@ -482,6 +482,27 @@ impl Automata {
         }
     }
 
+    /// Adds a new peer to the mesh network.
+    ///
+    /// Creates a peer entry with the given fingerprint if it doesn't exist.
+    ///
+    /// # Arguments
+    ///
+    /// * `fingerprint` - Unique identifier for the peer (typically MAC address or cryptographic fingerprint)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pwnagotchi_automata::{Automata, PersonalityConfig};
+    ///
+    /// let mut automata = Automata::new(PersonalityConfig::default());
+    ///
+    /// // Add peers
+    /// automata.add_peer("aa:bb:cc:dd:ee:ff".to_string());
+    /// automata.add_peer("11:22:33:44:55:66".to_string());
+    ///
+    /// assert_eq!(automata.peers().len(), 2);
+    /// ```
     pub fn add_peer(&mut self, fingerprint: String) {
         let peer = self.peers.entry(fingerprint.clone()).or_insert_with(|| Peer {
             fingerprint: fingerprint.clone(),
