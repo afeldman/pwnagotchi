@@ -11,14 +11,16 @@ This is a complete Rust rewrite of the [pwnagotchi](https://pwnagotchi.org/) pro
 - **Memory Safe**: Rewritten in Rust for guaranteed memory safety
 - **High Performance**: Async/await with tokio for efficient I/O
 - **Modular Design**: Clean separation into multiple crates
-- **Plugin System**: Extensible via trait-based plugins
+- **Plugin System**: Extensible via trait-based plugins (Rust + Python)
+- **Python Integration**: Write plugins in Python with PyO3
+- **Static Analysis**: Comprehensive linting, type-checking, and testing for Python plugins
 - **Mesh Networking**: Communicate with other pwnagotchi units
 - **E-ink Display Support**: Visual feedback on e-ink screens
 - **State Machine**: Mood-based behavior (bored, excited, sad, etc.)
 
 ## Architecture
 
-### Crates
+### Rust Crates
 
 - **pwnagotchi-core**: Main agent logic, WiFi monitoring, handshake detection
 - **pwnagotchi-bettercap**: HTTP/WebSocket client for bettercap API
@@ -26,7 +28,26 @@ This is a complete Rust rewrite of the [pwnagotchi](https://pwnagotchi.org/) pro
 - **pwnagotchi-mesh**: Mesh networking with cryptographic identity
 - **pwnagotchi-ui**: Display rendering for e-ink screens
 - **pwnagotchi-plugins**: Plugin system with async traits
+- **pwnagotchi-py**: Python plugin integration via PyO3
 - **pwnagotchi-cli**: Command-line interface
+- **pwnagotchi-tools**: Backup/restore utilities
+
+### Python Plugin System
+
+Write plugins in Python that integrate seamlessly with the Rust core:
+
+```python
+from pwnagotchi_plugin import Plugin
+
+class MyPlugin(Plugin):
+    def name(self) -> str:
+        return "my_plugin"
+
+    async def on_handshake(self, filename, access_point, station):
+        print(f"Captured: {filename}")
+```
+
+See [PYTHON_PLUGINS.md](PYTHON_PLUGINS.md) for full documentation.
 
 ## Building
 
@@ -180,9 +201,72 @@ cargo run -- -d start
 ### Check code
 
 ```bash
+# Rust
 cargo clippy --all
 cargo fmt --all
+
+# Python plugins
+make py-all  # Format, lint, type-check, and test
 ```
+
+## Python Plugin Development
+
+### Setup
+
+```bash
+# Install development tools
+make py-install
+```
+
+### Quick Start
+
+Create a plugin in `plugins/my_plugin.py`:
+
+```python
+from typing import Any
+from pwnagotchi_plugin import Plugin
+
+class MyPlugin(Plugin):
+    def name(self) -> str:
+        return "my_plugin"
+
+    def version(self) -> str:
+        return "1.0.0"
+
+    def description(self) -> str:
+        return "My awesome plugin"
+
+    async def on_handshake(self, filename: str, access_point: dict[str, Any], station: dict[str, Any]) -> None:
+        print(f"Handshake captured: {filename}")
+```
+
+### Development Workflow
+
+```bash
+# Format code
+make py-format
+
+# Lint code
+make py-lint
+
+# Type check
+make py-type
+
+# Run tests
+make py-test
+
+# Run all checks
+make py-all
+```
+
+### Static Analysis Tools
+
+- **Ruff**: Fast Python linter (replaces flake8, isort, pyupgrade, etc.)
+- **Black**: Code formatter for consistent style
+- **Mypy**: Static type checker in strict mode
+- **Pytest**: Testing framework with async support
+
+See [PYTHON_PLUGINS.md](PYTHON_PLUGINS.md) for complete documentation.
 
 ## Utility Tools
 

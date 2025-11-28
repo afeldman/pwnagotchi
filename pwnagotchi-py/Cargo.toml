@@ -1,0 +1,30 @@
+[package]
+name = "pwnagotchi-py"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Workspace dependencies
+pwnagotchi-plugins = { path = "../pwnagotchi-plugins" }
+pwnagotchi-automata = { path = "../pwnagotchi-automata" }
+pwnagotchi-core = { path = "../pwnagotchi-core" }
+
+# Python integration
+pyo3 = { version = "0.20", features = ["auto-initialize"] }
+
+# Async/Sync bridge
+tokio = { workspace = true }
+async-trait = "0.1"
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }

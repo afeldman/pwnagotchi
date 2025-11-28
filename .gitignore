@@ -8,4 +8,11 @@ Cargo.lock
 *.swp
 *.swo
 *~
+venv/
+.venv/
 .DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

@@ -6,6 +6,7 @@ members = [
     "pwnagotchi-mesh",
     "pwnagotchi-ui",
     "pwnagotchi-plugins",
+    "pwnagotchi-py",
     "pwnagotchi-cli",
     "pwnagotchi-tools",
 ]
